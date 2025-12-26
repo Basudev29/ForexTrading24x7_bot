@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-from config import BOT_TOKEN, TD_API_KEY, ADMIN_IDS
+from config import BOT_TOKEN, TWELVEDATA_API_KEY
 from utils import fetch_price, format_response
 
 PAIRS = {
