@@ -1,136 +1,64 @@
 import os
 import asyncio
-import logging
-import requests
-from datetime import datetime
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    ContextTypes
+    MessageHandler,
+    ContextTypes,
+    filters,
 )
 
-# --------- Logging ----------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s — %(levelname)s — %(message)s"
-)
-
-# --------- ENV VARIABLES ----------
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TD_API_KEY = os.getenv("TWELVEDATA_API_KEY")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 if not BOT_TOKEN:
-    raise ValueError("❌ TELEGRAM_BOT_TOKEN not found in environment")
-
-if not TD_API_KEY:
-    logging.warning("⚠ TWELVEDATA_API_KEY missing — prices may fail")
+    raise ValueError("BOT_TOKEN is missing — Render ENV Vars me set karo")
 
 
-# --------- PRICE FETCH FUNCTION ----------
-def fetch_price(symbol):
-    try:
-        url = f"https://api.twelvedata.com/price?symbol={symbol}&apikey={TD_API_KEY}"
-        res = requests.get(url, timeout=10).json()
-
-        if "price" in res:
-            return float(res["price"])
-
-        logging.error(f"API Error for {symbol}: {res}")
-        return None
-
-    except Exception as e:
-        logging.error(f"Request failed: {e}")
-        return None
-
-
-# --------- SIGNAL ENGINE ----------
-def generate_signal(price):
-    if not price:
-        return "⚠ Price unavailable"
-
-    return (
-        "🟢 BUY Trend — Look for pullback" if price % 2 == 0
-        else "🔴 SELL Trend — Possible correction"
-    )
-
-
-# --------- FORMAT OUTPUT ----------
-def format_response(pair, price):
-    if not price:
-        return f"{pair}\n⚠ Live price not available"
-
-    signal = generate_signal(price)
-
-    return (
-        f"{pair}\n"
-        f"Price: {price}\n"
-        f"Signal: {signal}\n"
-        f"Updated: {datetime.utcnow()} UTC"
-    )
-
-
-# --------- COMMAND: /start ----------
+# ===== BASIC COMMANDS =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "🤖 *ForexTrading24x7 Auto Bot Activated*\n\n"
-        "Select commands:\n\n"
-        "📊 /market — Full Market Update\n"
-        "💶 /eurusd\n"
-        "💷 /gbpusd\n"
-        "💹 /usdjpy\n"
-        "🏆 /gold\n"
+    await update.message.reply_text(
+        "Namaste 👋\n\nBot successfully deployed on Render!\n\n"
+        "Type /help for commands."
     )
-    await update.message.reply_markdown(text)
 
 
-# --------- COMMAND: MARKET UPDATE ----------
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    pairs = {
-        "📈 EUR/USD": "EUR/USD",
-        "💷 GBP/USD": "GBP/USD",
-        "💹 USD/JPY": "USD/JPY",
-        "🏆 GOLD XAU/USD": "XAU/USD"
-    }
-
-    for name, sym in pairs.items():
-        price = fetch_price(sym)
-        await update.message.reply_text(format_response(name, price))
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Available Commands:\n"
+        "/start – Bot Status\n"
+        "/help – Command List\n"
+        "/about – Bot Info"
+    )
 
 
-# --------- INDIVIDUAL PAIR COMMANDS ----------
-async def eur(update: Update, ctx): 
-    p = fetch_price("EUR/USD")
-    await update.message.reply_text(format_response("📈 EUR/USD", p))
-
-async def gbp(update: Update, ctx): 
-    p = fetch_price("GBP/USD")
-    await update.message.reply_text(format_response("💷 GBP/USD", p))
-
-async def jpy(update: Update, ctx): 
-    p = fetch_price("USD/JPY")
-    await update.message.reply_text(format_response("💹 USD/JPY", p))
-
-async def gold(update: Update, ctx): 
-    p = fetch_price("XAU/USD")
-    await update.message.reply_text(format_response("🏆 GOLD", p))
+async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🤖 Advanced Telegram Bot\n"
+        "Hosted on Render — Auto Online 24x7"
+    )
 
 
-# --------- MAIN APP ----------
+# ===== AUTO-REPLY CHATBOT =====
+async def echo_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    reply = f"🟢 Received: {text}"
+    await update.message.reply_text(reply)
+
+
+# ====== MAIN APP RUNNER ======
 async def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_cmd))
+    app.add_handler(CommandHandler("about", about))
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("market", market))
-    application.add_handler(CommandHandler("eurusd", eur))
-    application.add_handler(CommandHandler("gbpusd", gbp))
-    application.add_handler(CommandHandler("usdjpy", jpy))
-    application.add_handler(CommandHandler("gold", gold))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_message))
 
-    logging.info("🚀 Bot started… polling updates")
-    await application.run_polling()
+    print("🚀 Bot Started — Polling Active")
+
+    await app.run_polling(close_loop=False)
 
 
 if __name__ == "__main__":
