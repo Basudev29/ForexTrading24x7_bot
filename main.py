@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-from config import TELEGRAM_BOT_TOKEN, TWELVEDATA_API_KEY
+from config import BOT_TOKEN, TWELVEDATA_API_KEY
 from utils import fetch_price, format_response
 
 PAIRS = {
@@ -37,7 +37,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ---------- Main ----------
 def main():
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("market", market))
     app.add_handler(CommandHandler("broadcast", broadcast))
