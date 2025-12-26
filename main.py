@@ -16,7 +16,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for name, sym in PAIRS.items():
-        price = fetch_price(sym, TD_API_KEY)
+        price = fetch_price(sym, TWELVEDATA_API_KEY)
         await update.message.reply_text(format_response(name, price))
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -37,7 +37,7 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ---------- Main ----------
 def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("market", market))
     app.add_handler(CommandHandler("broadcast", broadcast))
