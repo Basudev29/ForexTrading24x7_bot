@@ -1,5 +1,4 @@
 import os
-import asyncio
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -12,20 +11,20 @@ from telegram.ext import (
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN is missing — Render ENV Vars me set karo")
+    raise ValueError("BOT_TOKEN missing — Render Env Vars me add karo")
 
 
-# ===== BASIC COMMANDS =====
+# ===== Commands =====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Namaste 👋\n\nBot successfully deployed on Render!\n\n"
-        "Type /help for commands."
+        "Namaste 👋\nBot successfully deployed on Render.\n\n"
+        "Type /help to see commands."
     )
 
 
-async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Available Commands:\n"
+        "Commands:\n"
         "/start – Bot Status\n"
         "/help – Command List\n"
         "/about – Bot Info"
@@ -33,33 +32,27 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🤖 Advanced Telegram Bot\n"
-        "Hosted on Render — Auto Online 24x7"
-    )
+    await update.message.reply_text("🤖 Advanced Telegram Bot — Online 24x7")
 
 
-# ===== AUTO-REPLY CHATBOT =====
-async def echo_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    reply = f"🟢 Received: {text}"
-    await update.message.reply_text(reply)
+# ===== Auto Reply Chat =====
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(f"🟢 You said: {update.message.text}")
 
 
-# ====== MAIN APP RUNNER ======
-async def main():
+# ===== MAIN (NO asyncio.run) =====
+def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_cmd))
+    app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("about", about))
 
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo_message))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    print("🚀 Bot Started — Polling Active")
-
-    await app.run_polling(close_loop=False)
+    print("🚀 Bot started — Polling running...")
+    app.run_polling(stop_signals=None)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
